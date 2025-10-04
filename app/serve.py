@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import os, pandas as pd, sys, logging
 from datetime import datetime
 
@@ -12,6 +13,21 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Stock ML (Analysis Only)")
+
+# Add CORS middleware for React frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",  # React dev server
+        "http://127.0.0.1:3000",
+        "https://localhost:3000",
+        "http://localhost:3001",  # Alternative React port
+        "*"  # Allow all origins in development (remove in production)
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 # Initialize database connection on startup
 @app.on_event("startup")
@@ -83,12 +99,10 @@ async def predict_today():
         else:
             latest_date = "unknown"
             
-        return {
-            "status": "ok",
-            "date": latest_date, 
-            "count": len(df),
-            "predictions": df.to_dict(orient="records")
-        }
+        # Convert to list of records for frontend
+        predictions_list = df.to_dict(orient="records")
+        
+        return predictions_list
         
     except Exception as e:
         logger.error(f"Error in predict_today: {e}")
@@ -212,13 +226,20 @@ async def accuracy_by_stock(window: int = 60):
             if col in grp.columns:
                 grp[col] = pd.to_numeric(grp[col], errors='coerce').fillna(0.0)
         
-        return {
-            "status": "ok",
-            "window_days": window, 
-            "total_stocks": len(grp),
-            "total_evaluations": len(ev),
-            "stats": grp.to_dict(orient="records")
-        }
+        # Return stats as list for frontend
+        stats_list = grp.to_dict(orient="records")
+        
+        # Rename columns to match frontend interface
+        for stat in stats_list:
+            if 'mape' in stat:
+                stat['mae'] = stat.pop('mape')
+                stat['abs_gap'] = stat.get('mae', 0.0)
+            if 'directional_acc' in stat:
+                stat['directional_accuracy'] = stat.pop('directional_acc')
+            if 'signed_gap' not in stat:
+                stat['signed_gap'] = 0.0
+        
+        return stats_list
         
     except Exception as e:
         logger.error(f"Error in accuracy_by_stock: {e}")

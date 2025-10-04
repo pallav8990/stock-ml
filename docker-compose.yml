@@ -1,34 +1,75 @@
 version: '3.8'
 
 services:
-  stock-ml:
+  # MongoDB database
+  mongodb:
+    image: mongo:8.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=stock_ml_prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Stock-ML API Backend
+  stock-ml-api:
     build: .
     ports:
       - "8000:8000"
     volumes:
-      # Mount data directory for persistence
-      - ./data:/app/data
       # Optional: Mount configs for easy updates
       - ./conf:/app/conf:ro
     environment:
       - PYTHONPATH=/app
+      - DEP_TYPE=prod
+      - MONGO_URI=mongodb://mongodb:27017/stock_ml_prod
     restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
 
-  # Optional: Add a scheduler service for automated pipeline runs
+  # React Frontend
+  stock-ml-frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_BASE_URL=http://localhost:8000
+    restart: unless-stopped
+    depends_on:
+      - stock-ml-api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Pipeline Scheduler (runs ML pipeline daily)
   stock-ml-scheduler:
     build: .
     command: ["python", "pipeline/scheduler.py"]
     volumes:
-      - ./data:/app/data
       - ./conf:/app/conf:ro
     environment:
       - PYTHONPATH=/app
+      - DEP_TYPE=prod
+      - MONGO_URI=mongodb://mongodb:27017/stock_ml_prod
     restart: unless-stopped
     depends_on:
-      - stock-ml
+      mongodb:
+        condition: service_healthy
+
+volumes:
+  mongodb_data:
