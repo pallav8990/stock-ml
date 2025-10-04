@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Stock-ML (Analysis-Only)
 
 **Purpose:** Daily, automated pipeline to **collect** NSE EOD prices & public news, **build features**, **train** a next‑day return model, **predict**, and **evaluate** with gap explanations. No trading or broker APIs.
@@ -49,9 +50,12 @@ stock-ml/
 
 ### Notes
 - This is **analysis-only**. No buy/sell, no broker APIs.
-- Uses **NSE bhavcopy** (EOD zip CSV). If a day’s bhavcopy isn’t published yet, it falls back to the previous trading day.
+- Uses **NSE bhavcopy** (EOD zip CSV). If a day's bhavcopy isn't published yet, it falls back to the previous trading day.
 - News are pulled from configurable public RSS feeds and sentiment-scored with VADER. You can later swap in FinBERT or paid APIs.
 - Make sure outbound internet access is allowed on the host/container for downloads.
 
 ### Disclaimer
 This repository is for **educational analysis** only. It is **not investment advice**.
+=======
+# stock-ml
+>>>>>>> a0729cb6267b23f82b83fdf3249997437419e52c
