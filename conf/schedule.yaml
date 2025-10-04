@@ -1,0 +1,12 @@
+# Daily schedule in IST (24h)
+collect_hour: 9
+collect_minute: 0     # Build universe, prices, news, features
+
+train_hour: 9
+train_minute: 10      # Train/refresh model
+
+predict_hour: 9
+predict_minute: 15    # Predict next-day returns
+
+evaluate_hour: 9
+evaluate_minute: 0    # Next day evaluate & explain (runs each morning)

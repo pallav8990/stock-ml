@@ -1,0 +1,6 @@
+# Simple, configurable RSS sources for market/company news
+rss_feeds:
+  ETMarkets: "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms"
+  Moneycontrol: "https://www.moneycontrol.com/rss/marketreports.xml"
+  LiveMint: "https://www.livemint.com/rss/markets"
+# Add more feeds as needed
