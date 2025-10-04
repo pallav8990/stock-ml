@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { stockApi } from '../services/api';
-import { StockPrediction, StockAccuracy, FilterOptions, StockSeries } from '../types';
+import { StockPrediction, StockAccuracy, FilterOptions } from '../types';
 import PredictionTable from '../components/PredictionTable';
 import StockChart from '../components/StockChart';
 import FilterPanel from '../components/FilterPanel';
@@ -34,8 +34,12 @@ const Dashboard: React.FC = () => {
         stockApi.getAccuracyByStock(60), // 60-day window
       ]);
       
-      setPredictions(predictionsData || []);
-      setAccuracy(accuracyData || []);
+      // Handle case where API returns object with status instead of array
+      const predictions = Array.isArray(predictionsData) ? predictionsData : [];
+      const accuracy = Array.isArray(accuracyData) ? accuracyData : [];
+      
+      setPredictions(predictions);
+      setAccuracy(accuracy);
     } catch (err) {
       setError('Failed to fetch data. Please try again.');
       console.error('Error fetching dashboard data:', err);
@@ -49,6 +53,11 @@ const Dashboard: React.FC = () => {
   };
 
   const filteredAndSortedPredictions = React.useMemo(() => {
+    // Ensure predictions is always an array
+    if (!Array.isArray(predictions) || predictions.length === 0) {
+      return [];
+    }
+    
     let filtered = predictions;
     
     // Filter by series
@@ -78,11 +87,14 @@ const Dashboard: React.FC = () => {
   }, [predictions, filters]);
 
   const statsData = React.useMemo(() => {
-    const totalStocks = predictions.length;
-    const positiveStocks = predictions.filter(p => p.y_pred > 0).length;
-    const highConfidenceStocks = predictions.filter(p => p.y_pred_conf > 30).length;
-    const avgConfidence = predictions.length > 0 
-      ? predictions.reduce((sum, p) => sum + p.y_pred_conf, 0) / predictions.length 
+    // Ensure predictions is always an array
+    const validPredictions = Array.isArray(predictions) ? predictions : [];
+    
+    const totalStocks = validPredictions.length;
+    const positiveStocks = validPredictions.filter(p => p.y_pred > 0).length;
+    const highConfidenceStocks = validPredictions.filter(p => p.y_pred_conf > 30).length;
+    const avgConfidence = validPredictions.length > 0 
+      ? validPredictions.reduce((sum, p) => sum + p.y_pred_conf, 0) / validPredictions.length 
       : 0;
 
     return {

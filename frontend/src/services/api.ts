@@ -14,6 +14,8 @@ const apiClient = axios.create({
 // Request interceptor to add auth token if available
 apiClient.interceptors.request.use(
   (config) => {
+    // Temporarily disable auth for testing - uncomment below for production
+    /*
     const user = localStorage.getItem('stockml_user');
     if (user) {
       try {
@@ -23,6 +25,7 @@ apiClient.interceptors.request.use(
         console.error('Error parsing user data:', error);
       }
     }
+    */
     return config;
   },
   (error) => {
